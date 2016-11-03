@@ -9,4 +9,6 @@ public class Constants {
     public static final String API_KEY_V3 = "b7864a9771b23213efb30c9a9bb8371a";
     public static final String BASE_URL = "https://api.themoviedb.org/3/movie/";
     public static final String API_KEY_TEXT = "api_key";
+    public static final String IMAGE_BASE_URL = "http://image.tmdb.org/t/p/";
+    public static final String MOVIE_OBJ = "movie_obj";
 }

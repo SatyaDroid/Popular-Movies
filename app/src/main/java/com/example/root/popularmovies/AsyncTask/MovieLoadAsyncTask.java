@@ -28,11 +28,11 @@ import java.util.List;
 
 public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
 
-    HttpURLConnection mHttpURLConnection;
-    URL mURL;
-    BufferedReader mBufferedReader;
-    String movieResultString;
-    MovieLoadListener mMovieLoadListener;
+    private HttpURLConnection mHttpURLConnection;
+    private URL mURL;
+    private BufferedReader mBufferedReader;
+    private String movieResultString;
+    private MovieLoadListener mMovieLoadListener;
 
 
     @Override
@@ -69,6 +69,7 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
 
     @Override
     protected void onPostExecute(List<Movie> movies) {
+        mMovieLoadListener.onFinish(movies);
         super.onPostExecute(movies);
     }
 
@@ -119,7 +120,7 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
     }
 
     public interface MovieLoadListener {
-        void onFinish();
+        void onFinish(List<Movie> moviesList);
 
         void onErrorOccured();
 

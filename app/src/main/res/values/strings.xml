@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Popular Movies</string>
+    <string name="latest_movies_text">Latest Movies</string>
+    <string name="loading_text">Loading..</string>
 </resources>
