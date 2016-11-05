@@ -2,12 +2,15 @@ package com.example.root.popularmovies;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +30,9 @@ public class MoviesListActivity extends AppCompatActivity {
     GridLayoutManager mLayoutManager;
     ActionBar mActionBar;
     MoviesListAdapter adapter;
+    SwipeRefreshLayout mSwipeRefreshLayout;
+    MovieLoadAsyncTask mMovieLoadAsyncTask;
+    View mProgressView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +43,7 @@ public class MoviesListActivity extends AppCompatActivity {
         addListeners();
         setUpActionBar();
         setUpRecyclerView();
-        loadMoviesList();
+        loadMoviesList(false);
     }
 
     @Override
@@ -52,16 +58,25 @@ public class MoviesListActivity extends AppCompatActivity {
 
     private void intializeViews() {
         mEmptyRecyclerView = (EmptyRecyclerView) findViewById(R.id.movie_recycler_view);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+        mProgressView = findViewById(R.id.progress_view);
     }
 
     private void setUpActionBar() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         mActionBar = getSupportActionBar();
         mActionBar.setDisplayHomeAsUpEnabled(true);
         mActionBar.setTitle(getResources().getString(R.string.latest_movies_text));
     }
 
     private void addListeners() {
-
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                loadMoviesList(true);
+            }
+        });
     }
 
     private void setUpRecyclerView() {
@@ -69,26 +84,42 @@ public class MoviesListActivity extends AppCompatActivity {
         mEmptyRecyclerView.setLayoutManager(mLayoutManager);
     }
 
-    private void loadMoviesList() {
-        MovieLoadAsyncTask movieLoadAsyncTask = new MovieLoadAsyncTask();
-        movieLoadAsyncTask.setMovieListener(new MovieLoadAsyncTask.MovieLoadListener() {
+    private void loadMoviesList(final boolean isFromRefresh) {
+        if (mMovieLoadAsyncTask != null) {
+            mMovieLoadAsyncTask.cancel(true);
+        }
+        mMovieLoadAsyncTask = new MovieLoadAsyncTask();
+        mMovieLoadAsyncTask.setMovieListener(new MovieLoadAsyncTask.MovieLoadListener() {
 
             @Override
             public void onFinish(List<Movie> moviesList) {
+                if (isFromRefresh) {
+                    mSwipeRefreshLayout.setRefreshing(false);
+                } else {
+                    showLoader(false);
+                }
                 refreshAdapter(moviesList);
             }
 
             @Override
             public void onErrorOccured() {
-
+                showLoader(false);
             }
 
             @Override
             public void onProgress() {
 
             }
+
+            @Override
+            public void onStart() {
+                if (!isFromRefresh) {
+                    showLoader(true);
+                }
+            }
         });
-        movieLoadAsyncTask.execute("popular");
+        mMovieLoadAsyncTask.execute("popular");
+
     }
 
     private void refreshAdapter(List<Movie> list) {
@@ -141,8 +172,13 @@ public class MoviesListActivity extends AppCompatActivity {
         }
     }
 
-    public void showLoader(){
-
+    public void showLoader(boolean opt) {
+        if(opt) {
+            mProgressView.setVisibility(View.VISIBLE);
+        }else{
+            mProgressView.setVisibility(View.GONE);
+        }
     }
+
 
 }

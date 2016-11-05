@@ -33,7 +33,12 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
     private BufferedReader mBufferedReader;
     private String movieResultString;
     private MovieLoadListener mMovieLoadListener;
+    private boolean isErrorOccured = false;
 
+    @Override
+    protected void onPreExecute() {
+        mMovieLoadListener.onStart();
+    }
 
     @Override
     protected List<Movie> doInBackground(String... strings) {
@@ -58,19 +63,25 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
                 movieResultString = mStringBuilder.toString();
             }
         } catch (MalformedURLException e) {
+            isErrorOccured = true;
             e.printStackTrace();
         } catch (IOException e) {
+            isErrorOccured = true;
             e.printStackTrace();
         }
 
-        return parseStringToList(movieResultString);
+        return (movieResultString != null) ? parseStringToList(movieResultString) : null;
     }
 
 
     @Override
     protected void onPostExecute(List<Movie> movies) {
-        mMovieLoadListener.onFinish(movies);
-        super.onPostExecute(movies);
+        if (!isErrorOccured) {
+            mMovieLoadListener.onFinish(movies);
+            super.onPostExecute(movies);
+        } else {
+            mMovieLoadListener.onErrorOccured();
+        }
     }
 
     @Override
@@ -125,6 +136,8 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
         void onErrorOccured();
 
         void onProgress();
+
+        void onStart();
     }
 
     public void setMovieListener(MovieLoadListener movieListener) {
