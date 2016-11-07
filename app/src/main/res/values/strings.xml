@@ -3,4 +3,9 @@
     <string name="latest_movies_text">Latest Movies</string>
     <string name="loading_text">Loading..</string>
     <string name="movie_mania_text">Movie Mania</string>
+    <string name="rating_text">%s/10</string>
+    <string name="time_text">%s min</string>
+    <string name="retry">Retry</string>
+    <string name="no_network_connection">Please check your internet connection</string>
+    <string name="no_latest_movies_available">No latest movies available</string>
 </resources>

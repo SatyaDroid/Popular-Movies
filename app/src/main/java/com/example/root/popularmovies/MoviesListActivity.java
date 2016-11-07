@@ -14,7 +14,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.root.popularmovies.AsyncTask.MovieLoadAsyncTask;
 import com.example.root.popularmovies.Model.Movie;
@@ -26,13 +28,16 @@ import java.util.List;
 
 public class MoviesListActivity extends AppCompatActivity {
 
+    private static final String MOVIES_LIST = "movies_list";
     EmptyRecyclerView mEmptyRecyclerView;
     GridLayoutManager mLayoutManager;
-    ActionBar mActionBar;
     MoviesListAdapter adapter;
     SwipeRefreshLayout mSwipeRefreshLayout;
     MovieLoadAsyncTask mMovieLoadAsyncTask;
-    View mProgressView;
+    View mProgressView, mEmptyView;
+    TextView mEmptyViewTitle;
+    Button mRetryButton;
+    ArrayList<Movie> moviesList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +48,22 @@ public class MoviesListActivity extends AppCompatActivity {
         addListeners();
         setUpActionBar();
         setUpRecyclerView();
-        loadMoviesList(false);
+        if (savedInstanceState != null) {
+            moviesList = (ArrayList<Movie>) savedInstanceState.getSerializable(MOVIES_LIST);
+            if (moviesList != null && moviesList.size() > 0) {
+                refreshAdapter(moviesList);
+            } else {
+                loadMoviesList(false);
+            }
+        } else {
+            loadMoviesList(false);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(MOVIES_LIST, moviesList);
     }
 
     @Override
@@ -60,14 +80,15 @@ public class MoviesListActivity extends AppCompatActivity {
         mEmptyRecyclerView = (EmptyRecyclerView) findViewById(R.id.movie_recycler_view);
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
         mProgressView = findViewById(R.id.progress_view);
+        mEmptyView = findViewById(R.id.movie_list_empty_view);
+        mEmptyViewTitle = (TextView) mEmptyView.findViewById(R.id.empty_title_text_view);
+        mRetryButton = (Button) mEmptyView.findViewById(R.id.empty_view_retry_button);
     }
 
     private void setUpActionBar() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        mActionBar = getSupportActionBar();
-        mActionBar.setDisplayHomeAsUpEnabled(true);
-        mActionBar.setTitle(getResources().getString(R.string.latest_movies_text));
+        getSupportActionBar().setTitle(getResources().getString(R.string.latest_movies_text));
     }
 
     private void addListeners() {
@@ -77,52 +98,63 @@ public class MoviesListActivity extends AppCompatActivity {
                 loadMoviesList(true);
             }
         });
+        mRetryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                loadMoviesList(false);
+            }
+        });
     }
 
     private void setUpRecyclerView() {
         mLayoutManager = new GridLayoutManager(this, 2);
         mEmptyRecyclerView.setLayoutManager(mLayoutManager);
+        mEmptyRecyclerView.setEmptyView(mEmptyView);
     }
 
     private void loadMoviesList(final boolean isFromRefresh) {
-        if (mMovieLoadAsyncTask != null) {
-            mMovieLoadAsyncTask.cancel(true);
-        }
-        mMovieLoadAsyncTask = new MovieLoadAsyncTask();
-        mMovieLoadAsyncTask.setMovieListener(new MovieLoadAsyncTask.MovieLoadListener() {
+        if (CommonUtils.isNetworAvailable(this)) {
+            showErrorView(false, false, "");
+            if (mMovieLoadAsyncTask != null) {
+                mMovieLoadAsyncTask.cancel(true);
+            }
+            mMovieLoadAsyncTask = new MovieLoadAsyncTask();
+            mMovieLoadAsyncTask.setMovieListener(new MovieLoadAsyncTask.MovieLoadListener() {
 
-            @Override
-            public void onFinish(List<Movie> moviesList) {
-                if (isFromRefresh) {
-                    mSwipeRefreshLayout.setRefreshing(false);
-                } else {
+                @Override
+                public void onFinish(List<Movie> list) {
                     showLoader(false);
+                    moviesList = (ArrayList<Movie>) list;
+                    refreshAdapter(moviesList);
                 }
-                refreshAdapter(moviesList);
-            }
 
-            @Override
-            public void onErrorOccured() {
-                showLoader(false);
-            }
-
-            @Override
-            public void onProgress() {
-
-            }
-
-            @Override
-            public void onStart() {
-                if (!isFromRefresh) {
-                    showLoader(true);
+                @Override
+                public void onErrorOccured(String message) {
+                    showLoader(false);
+                    showErrorView(true, true, message);
                 }
-            }
-        });
-        mMovieLoadAsyncTask.execute("popular");
+
+                @Override
+                public void onProgress() {
+
+                }
+
+                @Override
+                public void onStart() {
+                    if (!isFromRefresh) {
+                        showLoader(true);
+                    }
+                }
+            });
+            mMovieLoadAsyncTask.execute(Constants.POPULAR);
+        } else {
+            showLoader(false);
+            showErrorView(true, true, getResources().getString(R.string.no_network_connection));
+        }
 
     }
 
-    private void refreshAdapter(List<Movie> list) {
+    private void refreshAdapter(ArrayList<Movie> list) {
         adapter = new MoviesListAdapter(list);
         mEmptyRecyclerView.setAdapter(adapter);
     }
@@ -130,8 +162,8 @@ public class MoviesListActivity extends AppCompatActivity {
     public class MoviesListAdapter extends RecyclerView.Adapter<ViewHolder> {
         ArrayList<Movie> mMoviesList;
 
-        public MoviesListAdapter(List<Movie> list) {
-            mMoviesList = (ArrayList<Movie>) list;
+        MoviesListAdapter(ArrayList<Movie> list) {
+            mMoviesList = list;
         }
 
         @Override
@@ -166,19 +198,36 @@ public class MoviesListActivity extends AppCompatActivity {
 
         final ImageView mMovieImage;
 
-        public ViewHolder(View itemView) {
+        ViewHolder(View itemView) {
             super(itemView);
             mMovieImage = (ImageView) itemView.findViewById(R.id.movie_image_poster);
         }
     }
 
     public void showLoader(boolean opt) {
-        if(opt) {
+        if (opt) {
             mProgressView.setVisibility(View.VISIBLE);
-        }else{
+        } else {
             mProgressView.setVisibility(View.GONE);
+            mSwipeRefreshLayout.setRefreshing(false);
         }
     }
 
+    private void showErrorView(boolean show, boolean isRetryRequired, String message) {
+        if (show) {
+            mEmptyView.setVisibility(View.VISIBLE);
+            if (isRetryRequired) {
+                mRetryButton.setVisibility(View.VISIBLE);
+            }
+        } else {
+            mEmptyView.setVisibility(View.GONE);
+            mRetryButton.setVisibility(View.GONE);
+        }
+        if (message != null) {
+            mEmptyViewTitle.setText(message);
+        } else {
+            mEmptyViewTitle.setText(getResources().getString(R.string.no_network_connection));
+        }
+    }
 
 }

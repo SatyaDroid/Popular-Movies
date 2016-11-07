@@ -34,7 +34,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clickable="true"
-            android:gravity="center">
+            android:gravity="center"
+            android:visibility="gone">
 
             <include
                 layout="@layout/progress_loader_layout"
@@ -42,6 +43,13 @@
                 android:layout_height="150dp"
                 android:visibility="visible" />
         </LinearLayout>
+
+        <include
+            android:id="@+id/movie_list_empty_view"
+            layout="@layout/empty_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
 
     </RelativeLayout>
 </android.support.design.widget.CoordinatorLayout>

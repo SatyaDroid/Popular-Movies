@@ -3,6 +3,7 @@
     package="com.example.root.popularmovies">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -17,7 +18,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MoviesListActivity" />
+        <activity android:name=".MoviesListActivity"
+            android:configChanges="orientation"/>
         <activity android:name=".MovieDetailActivity"></activity>
     </application>
 

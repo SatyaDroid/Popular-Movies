@@ -34,6 +34,7 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
     private String movieResultString;
     private MovieLoadListener mMovieLoadListener;
     private boolean isErrorOccured = false;
+    private boolean isImagesAndVideosRequired = false;
 
     @Override
     protected void onPreExecute() {
@@ -44,11 +45,14 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
     protected List<Movie> doInBackground(String... strings) {
         String mFilterOption = strings[0];
         Uri mUri = Uri.parse(Constants.BASE_URL + mFilterOption).buildUpon()
-                .appendQueryParameter(Constants.API_KEY_TEXT, Constants.API_KEY_V3).build();
+                .appendQueryParameter(Constants.API_KEY_QUERY_PARAMETER, Constants.API_KEY_V3)
+                .appendQueryParameter(Constants.APPEND_TO_RESPONSE_PARAMETER, Constants.IMAGES_AND_VIDEOS)
+                .build();
 
         try {
             mURL = new URL(mUri.toString());
             mHttpURLConnection = (HttpURLConnection) mURL.openConnection();
+            int responseCode = mHttpURLConnection.getResponseCode();
             InputStream mInputStream = mHttpURLConnection.getInputStream();
             if (mInputStream != null) {
                 mBufferedReader = new BufferedReader(new InputStreamReader(mInputStream));
@@ -61,6 +65,9 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
                     return null;
                 }
                 movieResultString = mStringBuilder.toString();
+                if (responseCode == 404 || responseCode == 401) {
+                    isErrorOccured = true;
+                }
             }
         } catch (MalformedURLException e) {
             isErrorOccured = true;
@@ -76,11 +83,18 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
 
     @Override
     protected void onPostExecute(List<Movie> movies) {
-        if (!isErrorOccured) {
-            mMovieLoadListener.onFinish(movies);
-            super.onPostExecute(movies);
-        } else {
-            mMovieLoadListener.onErrorOccured();
+        try {
+            if (!isErrorOccured) {
+                mMovieLoadListener.onFinish(movies);
+                super.onPostExecute(movies);
+            } else {
+                if(movieResultString != null) {
+                    mMovieLoadListener.onErrorOccured(new JSONObject(movieResultString).getString("status_message"));
+                }
+                mMovieLoadListener.onErrorOccured(null);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 
@@ -130,10 +144,33 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
         return movie;
     }
 
+    public Movie parseToMovieDetail(JSONObject obj) {
+
+        Movie movie = new Movie();
+        try {
+            movie.adult = obj.getBoolean("adult");
+            movie.video = obj.getBoolean("video");
+            movie.poster_path = obj.getString("poster_path");
+            movie.overview = obj.getString("overview");
+            movie.release_date = obj.getString("release_date");
+            movie.original_title = obj.getString("original_title");
+            movie.original_language = obj.getString("original_language");
+            movie.backdrop_path = obj.getString("backdrop_path");
+            movie.title = obj.getString("title");
+            movie.popularity = obj.getLong("popularity");
+            movie.vote_count = obj.getInt("vote_count");
+            movie.vote_average = obj.getLong("vote_average");
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return movie;
+    }
+
     public interface MovieLoadListener {
         void onFinish(List<Movie> moviesList);
 
-        void onErrorOccured();
+        void onErrorOccured(String message);
 
         void onProgress();
 
@@ -142,5 +179,9 @@ public class MovieLoadAsyncTask extends AsyncTask<String, Void, List<Movie>> {
 
     public void setMovieListener(MovieLoadListener movieListener) {
         mMovieLoadListener = movieListener;
+    }
+
+    public void setImagesAndVideosRequired(boolean isImagesAndVideosRequired) {
+        this.isImagesAndVideosRequired = isImagesAndVideosRequired;
     }
 }
