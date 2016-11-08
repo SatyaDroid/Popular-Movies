@@ -8,6 +8,6 @@
         android:entries="@array/movie_list_type_id"
         android:entryValues="@array/movie_list_type"
         android:key="@string/pref_movie_list_type_key"
-        android:title="Movie Type" />
+        android:title="@string/sort_by_title" />
 
 </PreferenceScreen>

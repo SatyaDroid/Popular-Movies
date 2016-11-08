@@ -29,21 +29,6 @@
                 android:layout_height="match_parent" />
         </android.support.v4.widget.SwipeRefreshLayout>
 
-        <LinearLayout
-            android:id="@+id/progress_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clickable="true"
-            android:gravity="center"
-            android:visibility="gone">
-
-            <include
-                layout="@layout/progress_loader_layout"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:visibility="visible" />
-        </LinearLayout>
-
         <include
             android:id="@+id/movie_list_empty_view"
             layout="@layout/empty_view"
@@ -52,4 +37,20 @@
             android:visibility="gone" />
 
     </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/progress_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:clickable="true"
+        android:background="#757575"
+        android:visibility="gone">
+
+        <include
+            layout="@layout/progress_loader_layout"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:visibility="visible" />
+    </LinearLayout>
 </android.support.design.widget.CoordinatorLayout>

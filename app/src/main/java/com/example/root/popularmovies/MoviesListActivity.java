@@ -14,6 +14,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +42,7 @@ public class MoviesListActivity extends AppCompatActivity {
     View mProgressView, mEmptyView, mView;
     TextView mEmptyViewTitle;
     Button mRetryButton;
+    View.OnClickListener mOnClickListener;
     ArrayList<Movie> moviesList = new ArrayList<>();
 
     @Override
@@ -48,19 +50,23 @@ public class MoviesListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movies_list);
 
-        intializeViews();
-        addListeners();
-        setUpActionBar();
-        setUpRecyclerView();
-        if (savedInstanceState != null) {
-            moviesList = (ArrayList<Movie>) savedInstanceState.getSerializable(MOVIES_LIST);
-            if (moviesList != null && moviesList.size() > 0) {
-                refreshAdapter(moviesList);
+        try {
+            intializeViews();
+            addListeners();
+            setUpActionBar();
+            setUpRecyclerView();
+            if (savedInstanceState != null) {
+                moviesList = (ArrayList<Movie>) savedInstanceState.getSerializable(MOVIES_LIST);
+                if (moviesList != null && moviesList.size() > 0) {
+                    refreshAdapter(moviesList);
+                } else {
+                    loadMoviesList(false);
+                }
             } else {
                 loadMoviesList(false);
             }
-        } else {
-            loadMoviesList(false);
+        } catch (Exception e) {
+            Log.e("error", e.toString());
         }
     }
 
@@ -112,16 +118,25 @@ public class MoviesListActivity extends AppCompatActivity {
                 loadMoviesList(true);
             }
         });
-        mRetryButton.setOnClickListener(new View.OnClickListener() {
+        mOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (CommonUtils.isNetworAvailable(MoviesListActivity.this)) {
-                    loadMoviesList(false);
-                } else {
-                    CommonUtils.getNetworkDialog(MoviesListActivity.this).show();
+                switch (view.getId()){
+                    case R.id.empty_view_retry_button:
+                        if (CommonUtils.isNetworAvailable(MoviesListActivity.this)) {
+                            loadMoviesList(false);
+                        } else {
+                            CommonUtils.getNetworkDialog(MoviesListActivity.this).show();
+                        }
+                        break;
+                    case R.id.progress_view:
+                        break;
                 }
             }
-        });
+        };
+        mRetryButton.setOnClickListener(mOnClickListener);
+        mProgressView.setClickable(true);
+        mProgressView.setOnClickListener(mOnClickListener);
     }
 
     private void setUpRecyclerView() {
@@ -169,7 +184,7 @@ public class MoviesListActivity extends AppCompatActivity {
                 }
             });
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            String movieType = preferences.getString(getString(R.string.pref_movie_list_type_key),getString(R.string.pref_movie_list_type_default));
+            String movieType = preferences.getString(getString(R.string.pref_movie_list_type_key), getString(R.string.pref_movie_list_type_default));
             mMovieLoadAsyncTask.execute(movieType);
         } else {
             showLoader(false);
@@ -209,9 +224,9 @@ public class MoviesListActivity extends AppCompatActivity {
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    /*Intent intent = new Intent(MoviesListActivity.this, MovieDetailActivity.class);
+                    Intent intent = new Intent(MoviesListActivity.this, MovieDetailActivity.class);
                     intent.putExtra(Constants.MOVIE_OBJ, mMovie);
-                    startActivity(intent);*/
+                    startActivity(intent);
                 }
             });
         }
