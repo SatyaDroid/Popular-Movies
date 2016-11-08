@@ -12,7 +12,7 @@ public class SettingsFragment extends PreferenceFragment implements Preference.O
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_general);
-        bindPreferenceSummaryToValue(findPreference(getResources().getString(R.string.pref_movie_list_type_key)));
+        bindPreferenceSummary(findPreference(getResources().getString(R.string.pref_movie_list_type_key)));
     }
 
     @Override
@@ -20,29 +20,19 @@ public class SettingsFragment extends PreferenceFragment implements Preference.O
         String stringValue = o.toString();
 
         if (preference instanceof ListPreference) {
-            // For list preferences, look up the correct display value in
-            // the preference's 'entries' list (since they have separate labels/values).
-            ListPreference listPreference = (ListPreference) preference;
-            int prefIndex = listPreference.findIndexOfValue(stringValue);
-            if (prefIndex >= 0) {
-                preference.setSummary(listPreference.getEntries()[prefIndex]);
+            ListPreference mListPreference = (ListPreference) preference;
+            int index = mListPreference.findIndexOfValue(stringValue);
+            if (index >= 0) {
+                preference.setSummary(mListPreference.getEntries()[index]);
             }
         } else {
-            // For other preferences, set the summary to the value's simple string representation.
             preference.setSummary(stringValue);
         }
         return true;
     }
 
-    private void bindPreferenceSummaryToValue(Preference preference) {
-        // Set the listener to watch for value changes.
+    private void bindPreferenceSummary(Preference preference) {
         preference.setOnPreferenceChangeListener(this);
-
-        // Trigger the listener immediately with the preference's
-        // current value.
-        onPreferenceChange(preference,
-                PreferenceManager
-                        .getDefaultSharedPreferences(preference.getContext())
-                        .getString(preference.getKey(), ""));
+        onPreferenceChange(preference, PreferenceManager.getDefaultSharedPreferences(preference.getContext()).getString(preference.getKey(), ""));
     }
 }
