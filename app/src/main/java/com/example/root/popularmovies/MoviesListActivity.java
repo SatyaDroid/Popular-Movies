@@ -230,18 +230,7 @@ public class MoviesListActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             final Movie mMovie = mMoviesList.get(position);
-            holder.mLoading.setVisibility(View.VISIBLE);
-            Picasso.with(holder.mMovieImage.getContext()).load(Constants.IMAGE_BASE_URL + "w185/" + mMovie.poster_path).into(holder.mMovieImage, new Callback() {
-                @Override
-                public void onSuccess() {
-                    holder.mLoading.setVisibility(View.GONE);
-                }
-
-                @Override
-                public void onError() {
-                    holder.mLoading.setVisibility(View.GONE);
-                }
-            });
+            Picasso.with(holder.mMovieImage.getContext()).load(Constants.IMAGE_BASE_URL + "w185/" + mMovie.poster_path).into(holder.mMovieImage);
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -261,12 +250,10 @@ public class MoviesListActivity extends AppCompatActivity {
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         final ImageView mMovieImage;
-        final View mLoading;
 
         ViewHolder(View itemView) {
             super(itemView);
             mMovieImage = (ImageView) itemView.findViewById(R.id.movie_image_poster);
-            mLoading = itemView.findViewById(R.id.progress_view);
         }
     }
 
