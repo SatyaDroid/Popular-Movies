@@ -23,6 +23,7 @@
     <string name="under_adult">U/A</string>
     <string name="english_text">English</string>
     <string name="sort_by_title">Sort By</string>
+    <string name="api_key_not_given">Please add your api key</string>
     <string-array name="movie_list_type">
         <item>popular</item>
         <item>top_rated</item>

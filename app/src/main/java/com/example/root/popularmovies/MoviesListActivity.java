@@ -21,11 +21,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.root.popularmovies.AsyncTask.MovieLoadAsyncTask;
 import com.example.root.popularmovies.Model.Movie;
 import com.example.root.popularmovies.views.EmptyRecyclerView;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -121,7 +123,7 @@ public class MoviesListActivity extends AppCompatActivity {
         mOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                switch (view.getId()){
+                switch (view.getId()) {
                     case R.id.empty_view_retry_button:
                         if (CommonUtils.isNetworAvailable(MoviesListActivity.this)) {
                             loadMoviesList(false);
@@ -165,7 +167,15 @@ public class MoviesListActivity extends AppCompatActivity {
                 public void onErrorOccured(String message) {
                     showLoader(false);
                     if (isFromRefresh) {
-                        showSnackbar(message);
+                        if(message != null) {
+                            showSnackbar(message);
+                        }else{
+                            if(Constants.API_KEY_V3 != null || Constants.API_KEY_V3 != "") {
+                                showSnackbar(getResources().getString(R.string.no_network_connection));
+                            }else{
+                                showSnackbar(getResources().getString(R.string.api_key_not_given));
+                            }
+                        }
                     } else {
                         showErrorView(true, true, message);
                     }
@@ -218,9 +228,20 @@ public class MoviesListActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBindViewHolder(ViewHolder holder, int position) {
+        public void onBindViewHolder(final ViewHolder holder, int position) {
             final Movie mMovie = mMoviesList.get(position);
-            Picasso.with(holder.mMovieImage.getContext()).load(Constants.IMAGE_BASE_URL + "w185/" + mMovie.poster_path).into(holder.mMovieImage);
+            holder.mLoading.setVisibility(View.VISIBLE);
+            Picasso.with(holder.mMovieImage.getContext()).load(Constants.IMAGE_BASE_URL + "w185/" + mMovie.poster_path).into(holder.mMovieImage, new Callback() {
+                @Override
+                public void onSuccess() {
+                    holder.mLoading.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onError() {
+                    holder.mLoading.setVisibility(View.GONE);
+                }
+            });
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -240,10 +261,12 @@ public class MoviesListActivity extends AppCompatActivity {
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         final ImageView mMovieImage;
+        final View mLoading;
 
         ViewHolder(View itemView) {
             super(itemView);
             mMovieImage = (ImageView) itemView.findViewById(R.id.movie_image_poster);
+            mLoading = itemView.findViewById(R.id.progress_view);
         }
     }
 
