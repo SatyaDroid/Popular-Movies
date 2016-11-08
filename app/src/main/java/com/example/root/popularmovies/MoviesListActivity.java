@@ -284,4 +284,9 @@ public class MoviesListActivity extends AppCompatActivity {
         mSnackbar.show();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadMoviesList(true);
+    }
 }
