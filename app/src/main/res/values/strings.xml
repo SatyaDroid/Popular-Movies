@@ -8,4 +8,15 @@
     <string name="retry">Retry</string>
     <string name="no_network_connection">Please check your internet connection</string>
     <string name="no_latest_movies_available">No latest movies available</string>
+    <string name="pref_movie_list_type_key">popular</string>
+    <string name="pref_movie_list_type_default">popular</string>
+    <string name="settings">Settings</string>
+    <string-array name="movie_list_type">
+        <item>popular</item>
+        <item>top_rated</item>
+    </string-array>
+    <string-array name="movie_list_type_id">
+        <item>Popular</item>
+        <item>Top Rated</item>
+    </string-array>
 </resources>

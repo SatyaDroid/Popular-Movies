@@ -27,12 +27,11 @@ public class CommonUtils {
                 .getState() == NetworkInfo.State.CONNECTED)) {
             return true;
         } else {
-            getDialog(context).show();
             return false;
         }
     }
 
-    public static AlertDialog getDialog(final Context context) {
+    public static AlertDialog getNetworkDialog(final Context context) {
         return new AlertDialog.Builder(context)
 
                 .setMessage("Network is disabled in your device. Would you like to enable it?")

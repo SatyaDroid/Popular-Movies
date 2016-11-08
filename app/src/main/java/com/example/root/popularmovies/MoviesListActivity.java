@@ -2,6 +2,9 @@ package com.example.root.popularmovies;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -11,6 +14,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,7 +38,7 @@ public class MoviesListActivity extends AppCompatActivity {
     MoviesListAdapter adapter;
     SwipeRefreshLayout mSwipeRefreshLayout;
     MovieLoadAsyncTask mMovieLoadAsyncTask;
-    View mProgressView, mEmptyView;
+    View mProgressView, mEmptyView, mView;
     TextView mEmptyViewTitle;
     Button mRetryButton;
     ArrayList<Movie> moviesList = new ArrayList<>();
@@ -61,6 +65,12 @@ public class MoviesListActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.movie_list_menu, menu);
+        return true;
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putSerializable(MOVIES_LIST, moviesList);
@@ -71,6 +81,9 @@ public class MoviesListActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
+                return true;
+            case R.id.menu_settings:
+                startActivity(new Intent(MoviesListActivity.this, SettingsActivity.class));
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -83,6 +96,7 @@ public class MoviesListActivity extends AppCompatActivity {
         mEmptyView = findViewById(R.id.movie_list_empty_view);
         mEmptyViewTitle = (TextView) mEmptyView.findViewById(R.id.empty_title_text_view);
         mRetryButton = (Button) mEmptyView.findViewById(R.id.empty_view_retry_button);
+        mView = findViewById(R.id.activity_movies_list);
     }
 
     private void setUpActionBar() {
@@ -101,7 +115,11 @@ public class MoviesListActivity extends AppCompatActivity {
         mRetryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                loadMoviesList(false);
+                if (CommonUtils.isNetworAvailable(MoviesListActivity.this)) {
+                    loadMoviesList(false);
+                } else {
+                    CommonUtils.getNetworkDialog(MoviesListActivity.this).show();
+                }
             }
         });
     }
@@ -114,7 +132,7 @@ public class MoviesListActivity extends AppCompatActivity {
 
     private void loadMoviesList(final boolean isFromRefresh) {
         if (CommonUtils.isNetworAvailable(this)) {
-            showErrorView(false, false, "");
+            mEmptyView.setVisibility(View.GONE);
             if (mMovieLoadAsyncTask != null) {
                 mMovieLoadAsyncTask.cancel(true);
             }
@@ -131,7 +149,11 @@ public class MoviesListActivity extends AppCompatActivity {
                 @Override
                 public void onErrorOccured(String message) {
                     showLoader(false);
-                    showErrorView(true, true, message);
+                    if (isFromRefresh) {
+                        showSnackbar(message);
+                    } else {
+                        showErrorView(true, true, message);
+                    }
                 }
 
                 @Override
@@ -146,10 +168,16 @@ public class MoviesListActivity extends AppCompatActivity {
                     }
                 }
             });
-            mMovieLoadAsyncTask.execute(Constants.POPULAR);
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            String movieType = preferences.getString(getString(R.string.pref_movie_list_type_key),getString(R.string.pref_movie_list_type_default));
+            mMovieLoadAsyncTask.execute(movieType);
         } else {
             showLoader(false);
-            showErrorView(true, true, getResources().getString(R.string.no_network_connection));
+            if (isFromRefresh) {
+                showSnackbar(getResources().getString(R.string.no_network_connection));
+            } else {
+                showErrorView(true, true, getResources().getString(R.string.no_network_connection));
+            }
         }
 
     }
@@ -181,9 +209,9 @@ public class MoviesListActivity extends AppCompatActivity {
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Intent intent = new Intent(MoviesListActivity.this, MovieDetailActivity.class);
+                    /*Intent intent = new Intent(MoviesListActivity.this, MovieDetailActivity.class);
                     intent.putExtra(Constants.MOVIE_OBJ, mMovie);
-                    startActivity(intent);
+                    startActivity(intent);*/
                 }
             });
         }
@@ -228,6 +256,17 @@ public class MoviesListActivity extends AppCompatActivity {
         } else {
             mEmptyViewTitle.setText(getResources().getString(R.string.no_network_connection));
         }
+    }
+
+    private void showSnackbar(String message) {
+        Snackbar mSnackbar = Snackbar.make(mView, message, Snackbar.LENGTH_LONG);
+        mSnackbar.setAction(getResources().getString(R.string.retry), new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                loadMoviesList(true);
+            }
+        });
+        mSnackbar.show();
     }
 
 }

@@ -20,6 +20,14 @@
         </activity>
         <activity android:name=".MoviesListActivity"
             android:configChanges="orientation"/>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="Settings"
+            android:parentActivityName=".MoviesListActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.root.popularmovies.MoviesListActivity" />
+        </activity>
         <activity android:name=".MovieDetailActivity"></activity>
     </application>
 
