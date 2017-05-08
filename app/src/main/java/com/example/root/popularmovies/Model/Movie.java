@@ -23,5 +23,6 @@ public class Movie extends Object implements Serializable {
     public float popularity;
     public int vote_count;
     public float vote_average;
+    public boolean is_favorite;
 
 }

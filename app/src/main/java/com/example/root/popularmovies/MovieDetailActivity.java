@@ -1,28 +1,63 @@
 package com.example.root.popularmovies;
 
+import android.content.ActivityNotFoundException;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.root.popularmovies.AsyncTask.MovieLoadAsyncTask;
+import com.example.root.popularmovies.Common.RetrofitAPIBuilder;
+import com.example.root.popularmovies.Contract.MovieContract;
+import com.example.root.popularmovies.Model.APIResponse;
 import com.example.root.popularmovies.Model.Movie;
+import com.example.root.popularmovies.Model.MovieDetail;
+import com.example.root.popularmovies.Model.Review;
+import com.example.root.popularmovies.Model.Video;
+import com.example.root.popularmovies.Services.MovieLoadService;
+import com.example.root.popularmovies.views.EmptyRecyclerView;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.Inflater;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class MovieDetailActivity extends AppCompatActivity {
 
     Movie mMovie;
+    MovieDetailFragment mMovieDetailFragment;
+    LayoutInflater mLayoutInflater;
     ActionBar mActionBar;
-    ImageView mMovieLogo;
-    TextView mMovieRatingText, mMovieReleaseText, mMovieDescriptionText, mMovieTitleText, mMoviePopularityText, mMovieVoteText, mMovieLanguageText,mMovieCertificateText;
-    View mOverviewLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,20 +70,17 @@ public class MovieDetailActivity extends AppCompatActivity {
 
         intializeViews();
         setUpActionBar();
-        bindData();
+        mMovieDetailFragment = new MovieDetailFragment();
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(Constants.MOVIE_OBJ, mMovie);
+        mMovieDetailFragment.setArguments(bundle);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.movie_detail_container, mMovieDetailFragment).disallowAddToBackStack().commit();
+
     }
 
     private void intializeViews() {
-        mMovieLogo = (ImageView) findViewById(R.id.poster);
-        mMovieRatingText = (TextView) findViewById(R.id.movie_rating_text);
-        mMovieTitleText = (TextView) findViewById(R.id.movie_title_text);
-        mMovieDescriptionText = (TextView) findViewById(R.id.movie_description_text);
-        mMovieReleaseText = (TextView) findViewById(R.id.movie_release_text);
-        mOverviewLayout = findViewById(R.id.overview_layout);
-        mMovieVoteText = (TextView) findViewById(R.id.movie_vote_text);
-        mMoviePopularityText = (TextView) findViewById(R.id.movie_popularity_text);
-        mMovieLanguageText = (TextView) findViewById(R.id.movie_language_text);
-        mMovieCertificateText = (TextView) findViewById(R.id.movie_certificate);
+        mLayoutInflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
     }
 
     private void setUpActionBar() {
@@ -59,26 +91,6 @@ public class MovieDetailActivity extends AppCompatActivity {
         mActionBar.setDisplayHomeAsUpEnabled(true);
     }
 
-    private void bindData() {
-        Picasso.with(mMovieLogo.getContext()).load(Constants.IMAGE_BASE_URL + "w185/" + mMovie.poster_path).into(mMovieLogo);
-        mMovieRatingText.setText(String.format(getResources().getString(R.string.rating_text), String.valueOf(mMovie.vote_average)));
-        mMovieTitleText.setText(mMovie.original_title);
-        mMovieDescriptionText.setText(mMovie.overview);
-        mMovieReleaseText.setText(mMovie.release_date);
-        mMoviePopularityText.setText(String.valueOf(mMovie.popularity));
-        mMovieVoteText.setText(String.valueOf(mMovie.vote_count));
-        if(getResources().getString(R.string.lang_en).equalsIgnoreCase(mMovie.original_language)){
-            mMovieLanguageText.setText(getResources().getString(R.string.english_text));
-        }else{
-            mMovieLanguageText.setText(getResources().getString(R.string.other));
-        }
-        if(mMovie.adult){
-            mMovieCertificateText.setText(getResources().getString(R.string.adult));
-        }else{
-            mMovieCertificateText.setText(getResources().getString(R.string.under_adult));
-        }
-    }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -87,5 +99,11 @@ public class MovieDetailActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
     }
 }

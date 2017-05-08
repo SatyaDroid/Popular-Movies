@@ -7,4 +7,7 @@
     <color name="white">#FFFFFF</color>
     <color name="blackishGrey">#424242</color>
     <color name="black">#000000</color>
+    <color name="light_grey">#E0E0E0</color>
+    <color name="blue_grey">#ECEFF1</color>
+    <color name="light_indigo">#E8EAF6</color>
 </resources>
